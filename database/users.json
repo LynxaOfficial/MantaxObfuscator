@@ -1,18 +1,1 @@
-{
-  "admin": {
-    "password": "000000000000000000000000002fd93b",
-    "hwid": "0000000000000000000000001d99efd3",
-    "createdAt": "2026-06-02T13:04:16.403Z",
-    "lastLogin": "2026-06-02T13:04:53.883Z",
-    "isBanned": false,
-    "isAdmin": true
-  },
-  "pppp": {
-    "password": "000000000000000000000000002fd93b",
-    "hwid": "00000000000000000000000002951bc1",
-    "createdAt": "2026-06-02T13:30:09.324Z",
-    "lastLogin": "2026-06-02T13:30:36.781Z",
-    "isBanned": false,
-    "isAdmin": false
-  }
-}
+{}
