@@ -1,1 +1,10 @@
-{}
+{
+  "admin": {
+    "password": "000000000000000000000000002fd93b",
+    "hwid": "0000000000000000000000001d99efd3",
+    "createdAt": "2026-06-02T13:04:16.403Z",
+    "lastLogin": null,
+    "isBanned": false,
+    "isAdmin": true
+  }
+}
