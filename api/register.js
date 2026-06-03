@@ -20,11 +20,11 @@ export default async function handler(req, res) {
   }
   
   // ========== GANTI PAKE PUNYA LO ==========
-  const GITHUB_TOKEN = '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';
+  const GITHUB_TOKEN = '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';
   const REPO_OWNER = 'LynxaOfficial';
   const REPO_NAME = 'MantaxObfuscator';
   const TELEGRAM_TOKEN = '7798368683:AAEwVqJZu4V79ynkqVhdr_yZ1N_s9qDQ_4o';
-  const TELEGRAM_CHAT_ID = 'LynxaOfficial';
+  const TELEGRAM_CHAT_ID = 'XyrooXellz';
   // =========================================
   
   function hashPassword(str) {
