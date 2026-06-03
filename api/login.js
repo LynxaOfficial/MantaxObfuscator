@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   }
   
   // GANTI PAKE TOKEN BARU LO!
-  const GITHUB_TOKEN = 'ghp_TOKEN_BARU_LO';
+  const GITHUB_TOKEN = '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';
   const REPO_OWNER = 'LynxaOfficial';
   const REPO_NAME = 'MantaxObfuscator';
   
