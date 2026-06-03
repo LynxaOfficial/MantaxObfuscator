@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   const { username, password, hwid } = req.body;
   
   if (!username || !password || !hwid) {
-    return res.status(400).json({ success: false, message: 'Missing required fields' });
+    return res.status(400).json({ success: false, message: 'Missing fields' });
   }
   
   if (username.length < 3) {
@@ -19,11 +19,11 @@ export default async function handler(req, res) {
     return res.json({ success: false, message: '❌ Password minimal 4 karakter!' });
   }
   
-  // ========== HARDCODE TOKEN DI SINI ==========
-  const GITHUB_TOKEN = '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';
+  // ========== TOKEN BARU ==========
+  const GITHUB_TOKEN = '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';
   const REPO_OWNER = 'LynxaOfficial';
   const REPO_NAME = 'MantaxObfuscator';
-  // ============================================
+  // =================================
   
   function hashPassword(str) {
     let hash = 0;
@@ -43,12 +43,12 @@ export default async function handler(req, res) {
           'Accept': 'application/vnd.github.v3+json'
         }
       });
-      if (response.status === 404) return null;
+      if (response.status === 404) return {};
       const data = await response.json();
       const content = Buffer.from(data.content, 'base64').toString();
       return JSON.parse(content);
     } catch (err) {
-      return null;
+      return {};
     }
   }
   
@@ -58,16 +58,14 @@ export default async function handler(req, res) {
     
     let sha = null;
     try {
-      const getResponse = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}` }
-      });
-      if (getResponse.status === 200) {
-        const existing = await getResponse.json();
+      const getRes = await fetch(url, { headers: { 'Authorization': `Bearer ${GITHUB_TOKEN}` } });
+      if (getRes.status === 200) {
+        const existing = await getRes.json();
         sha = existing.sha;
       }
-    } catch (e) {}
+    } catch(e) {}
     
-    const response = await fetch(url, {
+    await fetch(url, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${GITHUB_TOKEN}`,
@@ -80,20 +78,18 @@ export default async function handler(req, res) {
         branch: 'main'
       })
     });
-    
-    return response.status === 200 || response.status === 201;
   }
   
   try {
-    let usersDb = await fetchFromGitHub('database/users.json') || {};
-    let hwidDb = await fetchFromGitHub('database/hwids.json') || {};
+    let usersDb = await fetchFromGitHub('database/users.json');
+    let hwidDb = await fetchFromGitHub('database/hwids.json');
     
     if (usersDb[username]) {
       return res.json({ success: false, message: '❌ Username sudah terdaftar!' });
     }
     
     if (hwidDb[hwid]) {
-      return res.json({ success: false, message: '🔒 HWID ini sudah terikat ke akun lain! 1 perangkat = 1 akun.' });
+      return res.json({ success: false, message: '🔒 HWID sudah terikat ke akun lain!' });
     }
     
     const isFirstUser = Object.keys(usersDb).length === 0;
@@ -108,17 +104,17 @@ export default async function handler(req, res) {
     };
     hwidDb[hwid] = username;
     
-    await pushToGitHub('database/users.json', usersDb, `Register new user: ${username}`);
-    await pushToGitHub('database/hwids.json', hwidDb, `HWID binding for: ${username}`);
+    await pushToGitHub('database/users.json', usersDb, `Register: ${username}`);
+    await pushToGitHub('database/hwids.json', hwidDb, `HWID: ${username}`);
     
     return res.json({ 
       success: true, 
-      message: isFirstUser ? '✅ Register berhasil! Anda adalah admin pertama!' : '✅ Register berhasil! Silakan login.',
+      message: isFirstUser ? '✅ Register berhasil! Anda admin pertama!' : '✅ Register berhasil! Silakan login.',
       isFirstUser: isFirstUser
     });
     
   } catch (error) {
     console.error('Register error:', error);
-    return res.status(500).json({ success: false, message: 'Internal error: ' + error.message });
+    return res.status(500).json({ success: false, message: 'Error: ' + error.message });
   }
 }
