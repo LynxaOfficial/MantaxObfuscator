@@ -19,15 +19,11 @@ export default async function handler(req, res) {
     return res.json({ success: false, message: '❌ Password minimal 4 karakter!' });
   }
   
-  const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-  const REPO_OWNER = process.env.REPO_OWNER;
-  const REPO_NAME = process.env.REPO_NAME;
-  const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
-  const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-  
-  if (!GITHUB_TOKEN || !REPO_OWNER || !REPO_NAME) {
-    return res.status(500).json({ success: false, message: 'Server config error: missing env vars' });
-  }
+  // ========== HARDCODE TOKEN DI SINI ==========
+  const GITHUB_TOKEN = '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';
+  const REPO_OWNER = 'LynxaOfficial';
+  const REPO_NAME = 'MantaxObfuscator';
+  // ============================================
   
   function hashPassword(str) {
     let hash = 0;
@@ -36,17 +32,6 @@ export default async function handler(req, res) {
       hash = hash & hash;
     }
     return Math.abs(hash).toString(16).padStart(32, '0');
-  }
-  
-  async function sendTelegram(text) {
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) return;
-    try {
-      await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: text, parse_mode: 'HTML' })
-      });
-    } catch(e) { console.log('Telegram error:', e.message); }
   }
   
   async function fetchFromGitHub(filePath) {
@@ -125,8 +110,6 @@ export default async function handler(req, res) {
     
     await pushToGitHub('database/users.json', usersDb, `Register new user: ${username}`);
     await pushToGitHub('database/hwids.json', hwidDb, `HWID binding for: ${username}`);
-    
-    await sendTelegram(`📝 *NEW USER REGISTERED!*\n\n👤 Username: ${username}\n🖥️ HWID: ${hwid.substring(0,20)}...\n👑 Admin: ${isFirstUser ? '✅ YES (First User)' : '❌ NO'}\n📅 Time: ${new Date().toLocaleString()}`);
     
     return res.json({ 
       success: true, 
