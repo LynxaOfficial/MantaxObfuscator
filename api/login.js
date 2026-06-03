@@ -12,13 +12,6 @@ export default async function handler(req, res) {
     return res.status(400).json({ success: false, message: 'Missing required fields' });
   }
   
-  if (username.length < 3) {
-    return res.json({ success: false, message: '❌ Username minimal 3 karakter!' });
-  }
-  if (password.length < 4) {
-    return res.json({ success: false, message: '❌ Password minimal 4 karakter!' });
-  }
-  
   const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
   const REPO_OWNER = process.env.REPO_OWNER;
   const REPO_NAME = process.env.REPO_NAME;
@@ -103,39 +96,51 @@ export default async function handler(req, res) {
     let usersDb = await fetchFromGitHub('database/users.json') || {};
     let hwidDb = await fetchFromGitHub('database/hwids.json') || {};
     
-    if (usersDb[username]) {
-      return res.json({ success: false, message: '❌ Username sudah terdaftar!' });
+    if (!usersDb[username]) {
+      return res.json({ success: false, message: '❌ Username tidak ditemukan!' });
     }
     
-    if (hwidDb[hwid]) {
-      return res.json({ success: false, message: '🔒 HWID ini sudah terikat ke akun lain! 1 perangkat = 1 akun.' });
+    const user = usersDb[username];
+    
+    if (user.password !== hashPassword(password)) {
+      return res.json({ success: false, message: '❌ Password salah!' });
     }
     
-    const isFirstUser = Object.keys(usersDb).length === 0;
+    if (user.isBanned) {
+      return res.json({ success: false, message: '🚫 Akun telah di-BAN!' });
+    }
     
-    usersDb[username] = {
-      password: hashPassword(password),
-      hwid: hwid,
-      createdAt: new Date().toISOString(),
-      lastLogin: null,
-      isBanned: false,
-      isAdmin: isFirstUser
-    };
-    hwidDb[hwid] = username;
+    if (user.hwid && user.hwid !== hwid) {
+      return res.json({ success: false, message: '🔒 HWID MISMATCH! Akun terikat ke perangkat lain.' });
+    }
     
-    await pushToGitHub('database/users.json', usersDb, `Register new user: ${username}`);
-    await pushToGitHub('database/hwids.json', hwidDb, `HWID binding for: ${username}`);
+    let isNewBind = false;
+    if (!user.hwid) {
+      user.hwid = hwid;
+      hwidDb[hwid] = username;
+      isNewBind = true;
+    }
     
-    await sendTelegram(`📝 *NEW USER REGISTERED!*\n\n👤 Username: ${username}\n🖥️ HWID: ${hwid.substring(0,20)}...\n👑 Admin: ${isFirstUser ? '✅ YES (First User)' : '❌ NO'}\n📅 Time: ${new Date().toLocaleString()}`);
+    user.lastLogin = new Date().toISOString();
+    
+    if (isNewBind) {
+      await pushToGitHub('database/users.json', usersDb, `Update user ${username}`);
+      await pushToGitHub('database/hwids.json', hwidDb, `Update HWID binding for ${username}`);
+      await sendTelegram(`🔐 *HWID BINDING*\n\n👤 User: ${username}\n🖥️ HWID: ${hwid.substring(0,20)}...\n📅 Time: ${new Date().toLocaleString()}`);
+    } else {
+      await pushToGitHub('database/users.json', usersDb, `Update last login for ${username}`);
+    }
+    
+    await sendTelegram(`✅ *LOGIN SUCCESS*\n\n👤 User: ${username}\n🖥️ HWID: ${hwid.substring(0,20)}...\n📅 Time: ${new Date().toLocaleString()}`);
     
     return res.json({ 
       success: true, 
-      message: isFirstUser ? '✅ Register berhasil! Anda adalah admin pertama!' : '✅ Register berhasil! Silakan login.',
-      isFirstUser: isFirstUser
+      message: '✅ Login berhasil!',
+      isAdmin: user.isAdmin || false
     });
     
   } catch (error) {
-    console.error('Register error:', error);
+    console.error('Login error:', error);
     return res.status(500).json({ success: false, message: 'Internal error: ' + error.message });
   }
 }
